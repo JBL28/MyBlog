@@ -5,7 +5,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
-FROM node:20.19.0-alpine AS builder
+FROM node:20.19.0-alpine AS prisma-generator
 WORKDIR /app
 
 ARG DATABASE_URL="postgresql://build:build@localhost:5432/build?schema=public"
@@ -15,7 +15,17 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN --mount=type=secret,id=database_url \
   export DATABASE_URL="$(if [ -f /run/secrets/database_url ]; then cat /run/secrets/database_url; else printf '%s' "$DATABASE_URL"; fi)" \
-  && npm run prisma:generate \
+  && npm run prisma:generate
+
+FROM node:20.19.0-alpine AS builder
+WORKDIR /app
+
+ARG DATABASE_URL="postgresql://build:build@localhost:5432/build?schema=public"
+ENV NEXT_TELEMETRY_DISABLED=1
+
+COPY --from=prisma-generator /app ./
+RUN --mount=type=secret,id=database_url \
+  export DATABASE_URL="$(if [ -f /run/secrets/database_url ]; then cat /run/secrets/database_url; else printf '%s' "$DATABASE_URL"; fi)" \
   && npm run build
 
 FROM node:20.19.0-alpine AS runner

@@ -10,13 +10,15 @@ const dbHealthLog = globalForDbHealth.dbHealthLog ?? { lastStatus: undefined };
 globalForDbHealth.dbHealthLog = dbHealthLog;
 
 export async function logDatabaseConnectionStatus() {
+  if (dbHealthLog.lastStatus === "success") {
+    return;
+  }
+
   try {
     await prisma.$queryRaw`SELECT 1`;
 
-    if (dbHealthLog.lastStatus !== "success") {
-      console.info("[db] connection succeeded");
-      dbHealthLog.lastStatus = "success";
-    }
+    console.info("[db] connection succeeded");
+    dbHealthLog.lastStatus = "success";
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown database connection error";
     const oneLineMessage = message.replaceAll(/\s+/g, " ").trim();
