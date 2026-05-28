@@ -1,0 +1,72 @@
+name: MyBlog CI
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - dev
+      - main
+  push:
+    branches:
+      - dev
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 20.19.0
+  NEXT_TELEMETRY_DISABLED: '1'
+  DATABASE_URL: postgresql://myblog:myblog@localhost:5432/myblog?schema=public
+  NEXT_PUBLIC_SITE_URL: http://localhost:3000
+
+jobs:
+  quality:
+    name: Lint, Typecheck, and Build
+    runs-on: ubuntu-latest
+
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript check
+        run: npm run typecheck
+
+      - name: Build Next.js app
+        run: npm run build
+
+      - name: Write workflow summary
+        if: always()
+        run: |
+          {
+            echo "## MyBlog CI 결과"
+            echo ""
+            echo "- Prisma Generate: 완료"
+            echo "- Lint: 완료"
+            echo "- Typecheck: 완료"
+            echo "- Build: ${{ job.status }}"
+            echo ""
+            echo "> 테스트 스크립트가 추가되면 이 워크플로우에 npm test 또는 npm run test:ci를 연결하세요."
+          } >> "$GITHUB_STEP_SUMMARY"
