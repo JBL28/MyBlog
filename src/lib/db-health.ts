@@ -19,7 +19,7 @@ export async function logDatabaseConnectionStatus() {
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown database connection error";
-    const oneLineMessage = message.replace(/\s+/g, " ").trim();
+    const oneLineMessage = message.replaceAll(/\s+/g, " ").trim();
 
     if (dbHealthLog.lastStatus !== "failure") {
       console.error(`[db] connection failed: ${oneLineMessage}`);
