@@ -10,6 +10,7 @@ BUILD_DB_PORT=5432
 BUILD_DB_NAME=myblog
 BUILD_DB_USER=myblog
 BUILD_DB_PASSWORD=<password>
+NEXT_PUBLIC_SITE_URL=https://example.com
 ```
 
 Fallback 이름도 지원한다.
@@ -20,6 +21,7 @@ DB_PORT=5432
 DB_NAME=myblog
 DB_USER=myblog
 DB_PASSWORD=<password>
+NEXT_PUBLIC_SITE_URL=https://example.com
 ```
 
 이미 완성된 URL을 직접 넣고 싶으면 아래 Secret 중 하나를 설정한다. URL Secret이 있으면 host/port 조합보다 우선한다.
@@ -30,7 +32,7 @@ CI_DATABASE_URL=postgresql://myblog:<password>@myblog-db:5432/myblog?schema=publ
 DATABASE_URL=postgresql://myblog:<password>@myblog-db:5432/myblog?schema=public
 ```
 
-Docker 빌드는 BuildKit secret으로 `DATABASE_URL`을 전달하므로 이미지 레이어에 DB URL을 남기지 않는다.
+Docker 빌드는 BuildKit secret으로 `DATABASE_URL`을 전달하므로 이미지 레이어에 DB URL을 남기지 않는다. `NEXT_PUBLIC_SITE_URL`은 Next.js 클라이언트 번들에 빌드 시점에 인라인될 수 있도록 build arg로 전달한다.
 
 ## 배포 환경: 서버 Docker Compose
 

@@ -1,31 +1,26 @@
-import { prisma } from "@/lib/prisma";
+import type { PrismaClient } from "@prisma/client";
 
 const globalForDbHealth = globalThis as unknown as {
-  dbHealthLog?: {
-    lastStatus?: "success" | "failure";
-  };
+  dbHealthCheckStarted?: boolean;
 };
 
-const dbHealthLog = globalForDbHealth.dbHealthLog ?? { lastStatus: undefined };
-globalForDbHealth.dbHealthLog = dbHealthLog;
+function formatErrorMessage(error: unknown) {
+  const message = error instanceof Error ? error.message : "Unknown database connection error";
+  return message.replaceAll(/\s+/g, " ").trim();
+}
 
-export async function logDatabaseConnectionStatus() {
-  if (dbHealthLog.lastStatus === "success") {
+export function startDatabaseConnectionLog(prisma: PrismaClient) {
+  if (globalForDbHealth.dbHealthCheckStarted) {
     return;
   }
 
-  try {
-    await prisma.$queryRaw`SELECT 1`;
+  globalForDbHealth.dbHealthCheckStarted = true;
 
-    console.info("[db] connection succeeded");
-    dbHealthLog.lastStatus = "success";
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unknown database connection error";
-    const oneLineMessage = message.replaceAll(/\s+/g, " ").trim();
-
-    if (dbHealthLog.lastStatus !== "failure") {
-      console.error(`[db] connection failed: ${oneLineMessage}`);
-      dbHealthLog.lastStatus = "failure";
-    }
-  }
+  void prisma.$queryRaw`SELECT 1`
+    .then(() => {
+      console.info("[db] connection succeeded");
+    })
+    .catch((error: unknown) => {
+      console.error(`[db] connection failed: ${formatErrorMessage(error)}`);
+    });
 }

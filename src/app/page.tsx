@@ -6,13 +6,10 @@ import { Card } from "@/components/ui/card";
 import { Section } from "@/components/ui/section";
 import { getPublishedPosts } from "@/lib/posts";
 import { isPortfolioMode, parsePortfolioVisible } from "@/lib/portfolio";
-import { logDatabaseConnectionStatus } from "@/lib/db-health";
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function Home({ searchParams }: { searchParams: SearchParams }) {
-  await logDatabaseConnectionStatus();
-
   const params = await searchParams;
   const portfolioMode = isPortfolioMode(params.portfolio);
   const portfolioVisible = parsePortfolioVisible(params.visible);

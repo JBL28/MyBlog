@@ -52,6 +52,7 @@ jobs:
           DB_NAME: ${{ secrets.BUILD_DB_NAME || secrets.DB_NAME || vars.BUILD_DB_NAME || vars.DB_NAME || 'myblog' }}
           DB_USER: ${{ secrets.BUILD_DB_USER || secrets.DB_USER || vars.BUILD_DB_USER || vars.DB_USER || 'myblog' }}
           DB_PASSWORD: ${{ secrets.BUILD_DB_PASSWORD || secrets.DB_PASSWORD || 'myblog' }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || secrets.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000' }}
         run: |
           node <<'NODE' >> "$GITHUB_ENV"
           const directUrl = process.env.DATABASE_URL_SECRET;
@@ -67,6 +68,7 @@ jobs:
           const password = process.env.DB_PASSWORD || 'myblog';
           console.log(`DATABASE_URL=postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${encodeURIComponent(name)}?schema=public`);
           NODE
+          echo "NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL" >> "$GITHUB_ENV"
 
       - name: Generate Prisma Client
         run: npm run prisma:generate
@@ -166,6 +168,7 @@ jobs:
           DB_NAME: ${{ secrets.BUILD_DB_NAME || secrets.DB_NAME || vars.BUILD_DB_NAME || vars.DB_NAME || 'myblog' }}
           DB_USER: ${{ secrets.BUILD_DB_USER || secrets.DB_USER || vars.BUILD_DB_USER || vars.DB_USER || 'myblog' }}
           DB_PASSWORD: ${{ secrets.BUILD_DB_PASSWORD || secrets.DB_PASSWORD || 'myblog' }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || secrets.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000' }}
         run: |
           node <<'NODE' >> "$GITHUB_ENV"
           const directUrl = process.env.DATABASE_URL_SECRET;
@@ -181,16 +184,19 @@ jobs:
           const password = process.env.DB_PASSWORD || 'myblog';
           console.log(`DOCKER_BUILD_DATABASE_URL=postgresql://${encodeURIComponent(user)}:${encodeURIComponent(password)}@${host}:${port}/${encodeURIComponent(name)}?schema=public`);
           NODE
+          echo "DOCKER_BUILD_NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL" >> "$GITHUB_ENV"
 
       - name: Validate Docker build configuration
         run: |
           test -n "$DOCKER_BUILD_DATABASE_URL" || { echo "::error::Missing Docker build database URL"; exit 1; }
+          test -n "$DOCKER_BUILD_NEXT_PUBLIC_SITE_URL" || { echo "::error::Missing Docker build site URL"; exit 1; }
           echo "Docker build DATABASE_URL is set from GitHub Secrets/runner env."
 
       - name: Build Docker image
         run: |
           docker build \
             --secret id=database_url,env=DOCKER_BUILD_DATABASE_URL \
+            --build-arg NEXT_PUBLIC_SITE_URL="$DOCKER_BUILD_NEXT_PUBLIC_SITE_URL" \
             --tag "$LOCAL_DOCKER_IMAGE:${{ github.sha }}" \
             .
 
