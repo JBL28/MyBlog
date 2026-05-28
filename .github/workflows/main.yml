@@ -1,0 +1,344 @@
+name: MyBlog CI/CD
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches:
+      - dev
+      - main
+  push:
+    branches:
+      - dev
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: 20.19.0
+  NEXT_TELEMETRY_DISABLED: '1'
+  DATABASE_URL: postgresql://myblog:myblog@localhost:5432/myblog?schema=public
+  NEXT_PUBLIC_SITE_URL: http://localhost:3000
+  LOCAL_DOCKER_IMAGE: myblog-ci
+
+jobs:
+  build-test:
+    name: 1. Build and Test
+    runs-on: ubuntu-latest
+
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npm run prisma:generate
+
+      - name: Run TypeScript check
+        run: npm run typecheck
+
+      - name: Build Next.js app
+        run: npm run build
+
+      - name: Run tests
+        run: npm run test:ci
+
+  sonarqube:
+    name: 3. SonarQube Scan
+    runs-on: ubuntu-latest
+    needs: build-test
+
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+      SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate SonarQube secrets
+        run: |
+          test -n "$SONAR_TOKEN" || { echo "::error::Missing SONAR_TOKEN secret"; exit 1; }
+          test -n "$SONAR_HOST_URL" || { echo "::error::Missing SONAR_HOST_URL secret"; exit 1; }
+          test -n "$SONAR_PROJECT_KEY" || { echo "::error::Missing SONAR_PROJECT_KEY secret"; exit 1; }
+
+      - name: Run SonarQube scan
+        uses: SonarSource/sonarqube-scan-action@v7
+        env:
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
+        with:
+          args: >
+            -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
+            -Dsonar.sources=src
+            -Dsonar.exclusions=node_modules/**,.next/**,coverage/**
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+
+      - name: Upload SonarQube task report
+        uses: actions/upload-artifact@v4
+        with:
+          name: sonarqube-task-report
+          path: .scannerwork/report-task.txt
+          if-no-files-found: error
+
+  quality-gate:
+    name: 4. SonarQube Quality Gate
+    runs-on: ubuntu-latest
+    needs: sonarqube
+
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
+
+    steps:
+      - name: Download SonarQube task report
+        uses: actions/download-artifact@v4
+        with:
+          name: sonarqube-task-report
+          path: .scannerwork
+
+      - name: Check Quality Gate
+        uses: SonarSource/sonarqube-quality-gate-action@v1
+        timeout-minutes: 5
+        env:
+          SONAR_TOKEN: ${{ env.SONAR_TOKEN }}
+          SONAR_HOST_URL: ${{ env.SONAR_HOST_URL }}
+
+  docker-build:
+    name: 5. Docker Image Build
+    runs-on: ubuntu-latest
+    needs: quality-gate
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build \
+            --build-arg DATABASE_URL="$DATABASE_URL" \
+            --build-arg NEXT_PUBLIC_SITE_URL="$NEXT_PUBLIC_SITE_URL" \
+            --tag "$LOCAL_DOCKER_IMAGE:${{ github.sha }}" \
+            .
+
+      - name: Save Docker image artifact
+        run: docker save "$LOCAL_DOCKER_IMAGE:${{ github.sha }}" --output myblog-image.tar
+
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: myblog-docker-image
+          path: myblog-image.tar
+          retention-days: 1
+
+  docker-push:
+    name: 6. Docker Image Push
+    runs-on: ubuntu-latest
+    needs: docker-build
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+      DOCKERHUB_REPOSITORY: ${{ secrets.DOCKERHUB_REPOSITORY }}
+
+    steps:
+      - name: Validate Docker Hub secrets
+        run: |
+          test -n "$DOCKERHUB_USERNAME" || { echo "::error::Missing DOCKERHUB_USERNAME secret"; exit 1; }
+          test -n "$DOCKERHUB_TOKEN" || { echo "::error::Missing DOCKERHUB_TOKEN secret"; exit 1; }
+
+      - name: Resolve Docker image name
+        id: image
+        run: |
+          namespace=$(echo "$DOCKERHUB_USERNAME" | tr '[:upper:]' '[:lower:]')
+          image="${DOCKERHUB_REPOSITORY:-$namespace/myblog}"
+          echo "name=$image" >> "$GITHUB_OUTPUT"
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: myblog-docker-image
+
+      - name: Load Docker image
+        run: docker load --input myblog-image.tar
+
+      - name: Login to Docker Hub
+        run: echo "$DOCKERHUB_TOKEN" | docker login --username "$DOCKERHUB_USERNAME" --password-stdin
+
+      - name: Tag Docker image
+        run: |
+          image="${{ steps.image.outputs.name }}"
+          short_sha="$(echo "${{ github.sha }}" | cut -c1-12)"
+          docker tag "$LOCAL_DOCKER_IMAGE:${{ github.sha }}" "$image:$short_sha"
+          docker tag "$LOCAL_DOCKER_IMAGE:${{ github.sha }}" "$image:${{ github.ref_name }}"
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            docker tag "$LOCAL_DOCKER_IMAGE:${{ github.sha }}" "$image:latest"
+          fi
+
+      - name: Push Docker image
+        run: |
+          image="${{ steps.image.outputs.name }}"
+          short_sha="$(echo "${{ github.sha }}" | cut -c1-12)"
+          docker push "$image:$short_sha"
+          docker push "$image:${{ github.ref_name }}"
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            docker push "$image:latest"
+          fi
+
+  deploy-dev:
+    name: Deploy Dev to Vercel
+    runs-on: ubuntu-latest
+    needs: quality-gate
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/dev'
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Set Vercel-compatible git author
+        run: |
+          git config user.email "rabid28@naver.com"
+          git config user.name "JBL28"
+          git commit --amend --no-edit --reset-author
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel preview environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build with Vercel
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy to Vercel
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }} > deployment-url.txt
+
+      - name: Upload deployment URL
+        uses: actions/upload-artifact@v4
+        with:
+          name: deploy-dev-url
+          path: deployment-url.txt
+
+      - name: Add notice to workflow summary
+        if: always()
+        run: |
+          {
+            echo "## 배포 완료!"
+            echo ""
+            echo "- Deploy Dev: ${{ job.status }}"
+            echo "- 배포링크: $(cat deployment-url.txt)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy-main:
+    name: Deploy Main to Server
+    runs-on: ubuntu-latest
+    needs: docker-push
+
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    env:
+      PORTAINER_SCHEME: https
+      TS_TARGET_HOST: ${{ secrets.TS_TARGET_HOST }}
+      TS_TARGET_PORT: ${{ secrets.TS_TARGET_PORT }}
+      PORTAINER_API_KEY: ${{ secrets.PORTAINER_API_KEY }}
+      PORTAINER_STACK_ID: ${{ secrets.PORTAINER_STACK_ID }}
+      PORTAINER_ENDPOINT_ID: ${{ secrets.PORTAINER_ENDPOINT_ID }}
+
+    steps:
+      - name: Validate deploy secrets
+        run: |
+          test -n "${{ secrets.TS_OAUTH_CLIENT_ID }}" || { echo "::error::Missing TS_OAUTH_CLIENT_ID"; exit 1; }
+          test -n "${{ secrets.TS_OAUTH_SECRET }}" || { echo "::error::Missing TS_OAUTH_SECRET"; exit 1; }
+          test -n "$TS_TARGET_HOST" || { echo "::error::Missing TS_TARGET_HOST"; exit 1; }
+          test -n "$TS_TARGET_PORT" || { echo "::error::Missing TS_TARGET_PORT"; exit 1; }
+          test -n "$PORTAINER_API_KEY" || { echo "::error::Missing PORTAINER_API_KEY"; exit 1; }
+          test -n "$PORTAINER_STACK_ID" || { echo "::error::Missing PORTAINER_STACK_ID"; exit 1; }
+          test -n "$PORTAINER_ENDPOINT_ID" || { echo "::error::Missing PORTAINER_ENDPOINT_ID"; exit 1; }
+
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
+
+      - name: Test Portainer connectivity
+        run: |
+          PORTAINER_URL="$PORTAINER_SCHEME://$TS_TARGET_HOST:$TS_TARGET_PORT"
+
+          curl -kfsS \
+            "$PORTAINER_URL/api/status"
+
+      - name: Redeploy Portainer stack
+        run: |
+          PORTAINER_URL="$PORTAINER_SCHEME://$TS_TARGET_HOST:$TS_TARGET_PORT"
+
+          curl -kfsS -X PUT \
+            "$PORTAINER_URL/api/stacks/$PORTAINER_STACK_ID/git/redeploy?endpointId=$PORTAINER_ENDPOINT_ID" \
+            -H "X-API-Key: $PORTAINER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "pullImage": true,
+              "prune": true
+            }'
+
+      - name: Add notice to workflow summary
+        if: always()
+        run: |
+          {
+            echo "## Main 배포"
+            echo ""
+            echo "- Deploy Main: ${{ job.status }}"
+            echo "- Target: $TS_TARGET_HOST:$TS_TARGET_PORT"
+            echo "- Stack ID: $PORTAINER_STACK_ID"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  summary:
+      name: Pipeline Summary
+      runs-on: ubuntu-latest
+      needs:
+        - build-test
+        - sonarqube
+        - quality-gate
+        - docker-build
+        - docker-push
+        - deploy-dev
+        - deploy-main
+      if: always()
+
+      steps:
+        - name: Write workflow summary
+          run: |
+            {
+              echo "## MyBlog CI/CD 결과"
+              echo ""
+              echo "- Build/Test: ${{ needs.build-test.result }}"
+              echo "- SonarQube: ${{ needs.sonarqube.result }}"
+              echo "- Quality Gate: ${{ needs.quality-gate.result }}"
+              echo "- Docker Build: ${{ needs.docker-build.result }}"
+              echo "- Docker Push: ${{ needs.docker-push.result }}"
+              echo ""
+            } >> "$GITHUB_STEP_SUMMARY"
