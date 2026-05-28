@@ -285,25 +285,50 @@ jobs:
           oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
           tags: tag:ci
 
-      - name: Test Portainer connectivity
+      - name: Redeploy Portainer web editor stack
         run: |
           PORTAINER_URL="$PORTAINER_SCHEME://$TS_TARGET_HOST:$TS_TARGET_PORT"
 
-          curl -kfsS \
-            "$PORTAINER_URL/api/status"
+          echo "Fetching current stack compose..."
+          curl -ksS \
+            "$PORTAINER_URL/api/stacks/$PORTAINER_STACK_ID/file" \
+            -H "X-API-Key: $PORTAINER_API_KEY" \
+            -o stack-file.json
 
-      - name: Redeploy Portainer stack
-        run: |
-          PORTAINER_URL="$PORTAINER_SCHEME://$TS_TARGET_HOST:$TS_TARGET_PORT"
+          STACK_FILE_CONTENT=$(jq -r '.StackFileContent' stack-file.json)
 
-          curl -kfsS -X PUT \
-            "$PORTAINER_URL/api/stacks/$PORTAINER_STACK_ID/git/redeploy?endpointId=$PORTAINER_ENDPOINT_ID" \
+          echo "Fetching current stack metadata..."
+          curl -ksS \
+            "$PORTAINER_URL/api/stacks/$PORTAINER_STACK_ID?endpointId=$PORTAINER_ENDPOINT_ID" \
+            -H "X-API-Key: $PORTAINER_API_KEY" \
+            -o stack-info.json
+
+          ENV_JSON=$(jq -c '.Env // []' stack-info.json)
+
+          echo "Redeploying stack with latest image pull..."
+          jq -n \
+            --arg stackFileContent "$STACK_FILE_CONTENT" \
+            --argjson env "$ENV_JSON" \
+            '{
+              stackFileContent: $stackFileContent,
+              env: $env,
+              prune: true,
+              pullImage: true
+            }' > update-payload.json
+
+          http_code=$(curl -ksS -X PUT \
+            "$PORTAINER_URL/api/stacks/$PORTAINER_STACK_ID?endpointId=$PORTAINER_ENDPOINT_ID" \
             -H "X-API-Key: $PORTAINER_API_KEY" \
             -H "Content-Type: application/json" \
-            -d '{
-              "pullImage": true,
-              "prune": true
-            }'
+            -d @update-payload.json \
+            -o response.json \
+            -w "%{http_code}")
+
+          cat response.json
+          test "$http_code" = "200" || {
+            echo "::error::Portainer stack update failed with HTTP $http_code"
+            exit 1
+          }
 
       - name: Add notice to workflow summary
         if: always()
