@@ -1,0 +1,97 @@
+@import "tailwindcss";
+@import "../styles/tokens.css";
+@import "../styles/typography.css";
+
+@font-face {
+  font-family: 'Pretendard Variable';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+  src: url('/fonts/PretendardVariable.woff2') format('woff2');
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-strong: var(--color-surface-strong);
+  --color-text: var(--color-text);
+  --color-muted: var(--color-muted);
+  --color-card: var(--color-card);
+  --color-card-text: var(--color-card-text);
+  --color-card-muted: var(--color-card-muted);
+  --color-tag: var(--color-tag);
+  --color-tag-text: var(--color-tag-text);
+  --color-border: var(--color-border);
+  --color-accent: var(--color-accent);
+  --color-accent-strong: var(--color-accent-strong);
+  --color-accent-soft: var(--color-accent-soft);
+  --color-danger: var(--color-danger);
+  --font-sans: var(--font-family-sans);
+  --font-mono: var(--font-family-mono);
+  --breakpoint-md: 48rem;
+  --breakpoint-lg: 64rem;
+  --breakpoint-xl: 92rem;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-family-sans);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-family-sans);
+  margin: 0;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+a { color: inherit; text-decoration: none; }
+
+::selection {
+  background: var(--color-brand-white);
+  color: var(--color-text);
+}
+
+.app-shell {
+  min-height: 100dvh;
+}
+
+.page-container {
+  margin-inline: auto;
+  max-width: var(--container-page);
+  padding-inline: var(--page-gutter);
+  width: 100%;
+}
+
+
+.panel {
+  --color-text: var(--color-card-text);
+  --color-muted: var(--color-card-muted);
+  background: var(--color-card);
+  color: var(--color-card-text);
+}
+
+.page-grid {
+  display: grid;
+  gap: var(--section-gap);
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 64rem) {
+  .page-grid {
+    align-items: start;
+    grid-template-columns: minmax(0, 1fr) var(--sidebar-width);
+  }
+}

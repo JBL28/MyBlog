@@ -1,0 +1,87 @@
+:root {
+  --color-brand-white: rgb(255 255 255);
+  --color-brand-light-brown: rgb(218 196 166);
+  --color-brand-light-orange: rgb(245 158 88);
+
+  --color-bg: var(--color-brand-white);
+  --color-surface: var(--color-brand-white);
+  --color-surface-strong: var(--color-brand-white);
+  --color-card: var(--color-brand-white);
+  --color-card-text: color-mix(in srgb, var(--color-brand-light-orange) 28%, #111113);
+  --color-card-muted: color-mix(in srgb, var(--color-brand-light-orange) 48%, #686d76);
+  --color-tag: var(--color-brand-white);
+  --color-tag-text: var(--color-card-text);
+  --color-text: color-mix(in srgb, var(--color-brand-light-orange) 28%, #111113);
+  --color-muted: color-mix(in srgb, var(--color-brand-light-orange) 48%, #686d76);
+  --color-border: color-mix(in srgb, var(--color-brand-light-brown) 30%, #dfe6ee);
+  --color-accent: color-mix(in srgb, var(--color-brand-light-orange) 72%, #7c2d12);
+  --color-accent-strong: color-mix(in srgb, var(--color-brand-light-orange) 58%, #7c2d12);
+  --color-accent-soft: var(--color-brand-white);
+  --color-danger: color-mix(in srgb, #d92d20 82%, var(--color-brand-light-orange));
+
+  --font-family-sans: 'Pretendard Variable', Pretendard, 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+  --font-family-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-base: 1rem;
+  --text-lg: 1.125rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.25rem;
+  --text-5xl: 3rem;
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.55;
+  --leading-relaxed: 1.75;
+
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.01em;
+
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+
+  --container-page: none;
+  --container-content: none;
+  --sidebar-width: clamp(18rem, 22vw, 26rem);
+  --page-gutter: clamp(0.75rem, 1.5vw, 1.5rem);
+  --section-gap: clamp(1.5rem, 4vw, 3rem);
+
+
+  --breakpoint-mobile-max: 47.999rem;
+  --breakpoint-tablet: 48rem;
+  --breakpoint-pc: 64rem;
+}
+
+[data-theme='dark'] {
+  --color-bg: var(--color-brand-white);
+  --color-surface: var(--color-brand-white);
+  --color-surface-strong: var(--color-brand-white);
+  --color-card: var(--color-brand-white);
+  --color-card-text: color-mix(in srgb, var(--color-brand-light-orange) 28%, #111113);
+  --color-card-muted: color-mix(in srgb, var(--color-brand-light-orange) 48%, #686d76);
+  --color-tag: var(--color-brand-white);
+  --color-tag-text: var(--color-card-text);
+  --color-text: color-mix(in srgb, var(--color-brand-light-orange) 28%, #111113);
+  --color-muted: color-mix(in srgb, var(--color-brand-light-orange) 48%, #686d76);
+  --color-border: color-mix(in srgb, var(--color-brand-light-brown) 30%, #dfe6ee);
+  --color-accent: color-mix(in srgb, var(--color-brand-light-orange) 72%, #7c2d12);
+  --color-accent-strong: color-mix(in srgb, var(--color-brand-light-orange) 58%, #7c2d12);
+  --color-accent-soft: var(--color-brand-white);
+  --color-danger: color-mix(in srgb, #d92d20 82%, var(--color-brand-light-orange));
+}
