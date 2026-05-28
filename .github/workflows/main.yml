@@ -252,69 +252,69 @@ jobs:
             echo "- 배포링크: $(cat deployment-url.txt)"
           } >> "$GITHUB_STEP_SUMMARY"
 
-    deploy-main:
-      name: Deploy Main to Server
-      runs-on: ubuntu-latest
-      needs: docker-push
+  deploy-main:
+    name: Deploy Main to Server
+    runs-on: ubuntu-latest
+    needs: docker-push
 
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
-      env:
-        PORTAINER_SCHEME: https
-        TS_TARGET_HOST: ${{ secrets.TS_TARGET_HOST }}
-        TS_TARGET_PORT: ${{ secrets.TS_TARGET_PORT }}
-        PORTAINER_API_KEY: ${{ secrets.PORTAINER_API_KEY }}
-        PORTAINER_STACK_ID: ${{ secrets.PORTAINER_STACK_ID }}
-        PORTAINER_ENDPOINT_ID: ${{ secrets.PORTAINER_ENDPOINT_ID }}
+    env:
+      PORTAINER_SCHEME: https
+      TS_TARGET_HOST: ${{ secrets.TS_TARGET_HOST }}
+      TS_TARGET_PORT: ${{ secrets.TS_TARGET_PORT }}
+      PORTAINER_API_KEY: ${{ secrets.PORTAINER_API_KEY }}
+      PORTAINER_STACK_ID: ${{ secrets.PORTAINER_STACK_ID }}
+      PORTAINER_ENDPOINT_ID: ${{ secrets.PORTAINER_ENDPOINT_ID }}
 
-      steps:
-        - name: Validate deploy secrets
-          run: |
-            test -n "${{ secrets.TS_OAUTH_CLIENT_ID }}" || { echo "::error::Missing TS_OAUTH_CLIENT_ID"; exit 1; }
-            test -n "${{ secrets.TS_OAUTH_SECRET }}" || { echo "::error::Missing TS_OAUTH_SECRET"; exit 1; }
-            test -n "$TS_TARGET_HOST" || { echo "::error::Missing TS_TARGET_HOST"; exit 1; }
-            test -n "$TS_TARGET_PORT" || { echo "::error::Missing TS_TARGET_PORT"; exit 1; }
-            test -n "$PORTAINER_API_KEY" || { echo "::error::Missing PORTAINER_API_KEY"; exit 1; }
-            test -n "$PORTAINER_STACK_ID" || { echo "::error::Missing PORTAINER_STACK_ID"; exit 1; }
-            test -n "$PORTAINER_ENDPOINT_ID" || { echo "::error::Missing PORTAINER_ENDPOINT_ID"; exit 1; }
+    steps:
+      - name: Validate deploy secrets
+        run: |
+          test -n "${{ secrets.TS_OAUTH_CLIENT_ID }}" || { echo "::error::Missing TS_OAUTH_CLIENT_ID"; exit 1; }
+          test -n "${{ secrets.TS_OAUTH_SECRET }}" || { echo "::error::Missing TS_OAUTH_SECRET"; exit 1; }
+          test -n "$TS_TARGET_HOST" || { echo "::error::Missing TS_TARGET_HOST"; exit 1; }
+          test -n "$TS_TARGET_PORT" || { echo "::error::Missing TS_TARGET_PORT"; exit 1; }
+          test -n "$PORTAINER_API_KEY" || { echo "::error::Missing PORTAINER_API_KEY"; exit 1; }
+          test -n "$PORTAINER_STACK_ID" || { echo "::error::Missing PORTAINER_STACK_ID"; exit 1; }
+          test -n "$PORTAINER_ENDPOINT_ID" || { echo "::error::Missing PORTAINER_ENDPOINT_ID"; exit 1; }
 
-        - name: Connect to Tailscale
-          uses: tailscale/github-action@v4
-          with:
-            oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
-            oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
-            tags: tag:ci
+      - name: Connect to Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          oauth-secret: ${{ secrets.TS_OAUTH_SECRET }}
+          tags: tag:ci
 
-        - name: Test Portainer connectivity
-          run: |
-            PORTAINER_URL="$PORTAINER_SCHEME://$TS_TARGET_HOST:$TS_TARGET_PORT"
+      - name: Test Portainer connectivity
+        run: |
+          PORTAINER_URL="$PORTAINER_SCHEME://$TS_TARGET_HOST:$TS_TARGET_PORT"
 
-            curl -kfsS \
-              "$PORTAINER_URL/api/status"
+          curl -kfsS \
+            "$PORTAINER_URL/api/status"
 
-        - name: Redeploy Portainer stack
-          run: |
-            PORTAINER_URL="$PORTAINER_SCHEME://$TS_TARGET_HOST:$TS_TARGET_PORT"
+      - name: Redeploy Portainer stack
+        run: |
+          PORTAINER_URL="$PORTAINER_SCHEME://$TS_TARGET_HOST:$TS_TARGET_PORT"
 
-            curl -kfsS -X PUT \
-              "$PORTAINER_URL/api/stacks/$PORTAINER_STACK_ID/git/redeploy?endpointId=$PORTAINER_ENDPOINT_ID" \
-              -H "X-API-Key: $PORTAINER_API_KEY" \
-              -H "Content-Type: application/json" \
-              -d '{
-                "pullImage": true,
-                "prune": true
-              }'
+          curl -kfsS -X PUT \
+            "$PORTAINER_URL/api/stacks/$PORTAINER_STACK_ID/git/redeploy?endpointId=$PORTAINER_ENDPOINT_ID" \
+            -H "X-API-Key: $PORTAINER_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "pullImage": true,
+              "prune": true
+            }'
 
-        - name: Add notice to workflow summary
-          if: always()
-          run: |
-            {
-              echo "## Main 배포"
-              echo ""
-              echo "- Deploy Main: ${{ job.status }}"
-              echo "- Target: $TS_TARGET_HOST:$TS_TARGET_PORT"
-              echo "- Stack ID: $PORTAINER_STACK_ID"
-            } >> "$GITHUB_STEP_SUMMARY"
+      - name: Add notice to workflow summary
+        if: always()
+        run: |
+          {
+            echo "## Main 배포"
+            echo ""
+            echo "- Deploy Main: ${{ job.status }}"
+            echo "- Target: $TS_TARGET_HOST:$TS_TARGET_PORT"
+            echo "- Stack ID: $PORTAINER_STACK_ID"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   summary:
       name: Pipeline Summary
