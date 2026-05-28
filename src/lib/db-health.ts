@@ -9,6 +9,15 @@ function formatErrorMessage(error: unknown) {
   return message.replaceAll(/\s+/g, " ").trim();
 }
 
+async function logDatabaseConnectionStatus(prisma: PrismaClient) {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    console.info("[db] connection succeeded");
+  } catch (error) {
+    console.error(`[db] connection failed: ${formatErrorMessage(error)}`);
+  }
+}
+
 export function startDatabaseConnectionLog(prisma: PrismaClient) {
   if (globalForDbHealth.dbHealthCheckStarted) {
     return;
@@ -16,11 +25,5 @@ export function startDatabaseConnectionLog(prisma: PrismaClient) {
 
   globalForDbHealth.dbHealthCheckStarted = true;
 
-  void prisma.$queryRaw`SELECT 1`
-    .then(() => {
-      console.info("[db] connection succeeded");
-    })
-    .catch((error: unknown) => {
-      console.error(`[db] connection failed: ${formatErrorMessage(error)}`);
-    });
+  logDatabaseConnectionStatus(prisma);
 }
