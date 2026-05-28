@@ -207,33 +207,6 @@ jobs:
             docker push "$image:latest"
           fi
 
-  summary:
-    name: Pipeline Summary
-    runs-on: ubuntu-latest
-    needs:
-      - build-test
-      - sonarqube
-      - quality-gate
-      - docker-build
-      - docker-push
-    if: always()
-
-    steps:
-      - name: Write workflow summary
-        run: |
-          {
-            echo "## MyBlog CI/CD 결과"
-            echo ""
-            echo "- Build/Test: ${{ needs.build-test.result }}"
-            echo "- SonarQube: ${{ needs.sonarqube.result }}"
-            echo "- Quality Gate: ${{ needs.quality-gate.result }}"
-            echo "- Docker Build: ${{ needs.docker-build.result }}"
-            echo "- Docker Push: ${{ needs.docker-push.result }}"
-            echo ""
-            echo "필수 Secrets: SONAR_TOKEN, SONAR_HOST_URL, SONAR_PROJECT_KEY, DOCKERHUB_USERNAME, DOCKERHUB_TOKEN"
-            echo "선택 Secrets: DOCKERHUB_REPOSITORY (예: jbl28/myblog)"
-          } >> "$GITHUB_STEP_SUMMARY"
-
   deploy-dev:
     name: Deploy Dev to Vercel
     runs-on: ubuntu-latest
@@ -279,4 +252,31 @@ jobs:
             echo "- 배포링크: $(cat deployment-url.txt)"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  #deploy-main:
+#deploy-main:
+
+summary:
+    name: Pipeline Summary
+    runs-on: ubuntu-latest
+    needs:
+      - build-test
+      - sonarqube
+      - quality-gate
+      - docker-build
+      - docker-push
+    if: always()
+
+    steps:
+      - name: Write workflow summary
+        run: |
+          {
+            echo "## MyBlog CI/CD 결과"
+            echo ""
+            echo "- Build/Test: ${{ needs.build-test.result }}"
+            echo "- SonarQube: ${{ needs.sonarqube.result }}"
+            echo "- Quality Gate: ${{ needs.quality-gate.result }}"
+            echo "- Docker Build: ${{ needs.docker-build.result }}"
+            echo "- Docker Push: ${{ needs.docker-push.result }}"
+            echo ""
+            echo "필수 Secrets: SONAR_TOKEN, SONAR_HOST_URL, SONAR_PROJECT_KEY, DOCKERHUB_USERNAME, DOCKERHUB_TOKEN"
+            echo "선택 Secrets: DOCKERHUB_REPOSITORY (예: jbl28/myblog)"
+          } >> "$GITHUB_STEP_SUMMARY"
