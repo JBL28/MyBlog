@@ -232,7 +232,7 @@ jobs:
             echo "선택 Secrets: DOCKERHUB_REPOSITORY (예: jbl28/myblog)"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  deploy(dev):
+  deploy-dev:
     name: Deploy Dev to Vercel
     runs-on: ubuntu-latest
     needs: quality-check
@@ -277,4 +277,4 @@ jobs:
             echo "- 배포링크: $(cat deployment-url.txt)"
           } >> "$GITHUB_STEP_SUMMARY"
 
-  #deploy(main):
+  #deploy-main:
