@@ -1,0 +1,3 @@
+module.exports=[3931,e=>{"use strict";let n=globalThis;e.s(["startDatabaseConnectionLog",0,function(e){n.dbHealthCheckStarted||(n.dbHealthCheckStarted=!0,e.$queryRaw`SELECT 1`.then(()=>{console.info("[db] connection succeeded")}).catch(e=>{console.error(`[db] connection failed: ${(e instanceof Error?e.message:"Unknown database connection error").replaceAll(/\s+/g," ").trim()}`)}))}])}];
+
+//# sourceMappingURL=src_lib_db-health_ts_0hy2k.-._.js.map

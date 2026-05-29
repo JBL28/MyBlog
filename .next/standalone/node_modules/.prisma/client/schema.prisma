@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id        String   @id @default(cuid())
+  slug      String   @unique
+  title     String
+  category  String
+  published Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  comments       Comment[]
+  viewEvents     ViewEvent[]
+  dailyPostStats DailyPostStats[]
+
+  @@index([published, createdAt])
+  @@index([category])
+}
+
+model Comment {
+  id           String   @id @default(cuid())
+  postSlug     String
+  nickname     String
+  passwordHash String
+  body         String
+  isDeleted    Boolean  @default(false)
+  isHidden     Boolean  @default(false)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  post Post @relation(fields: [postSlug], references: [slug], onDelete: Cascade)
+
+  @@index([postSlug, createdAt])
+  @@index([nickname])
+  @@index([isHidden, isDeleted])
+}
+
+model ViewEvent {
+  id        String   @id @default(cuid())
+  postSlug  String
+  sessionId String
+  ipHash    String
+  userAgent String?
+  referrer  String?
+  createdAt DateTime @default(now())
+
+  post Post @relation(fields: [postSlug], references: [slug], onDelete: Cascade)
+
+  @@index([postSlug, createdAt])
+  @@index([sessionId, postSlug, createdAt])
+  @@index([ipHash])
+}
+
+model DailyPostStats {
+  id             String   @id @default(cuid())
+  postSlug       String
+  date           DateTime @db.Date
+  views          Int      @default(0)
+  uniqueVisitors Int      @default(0)
+
+  post Post @relation(fields: [postSlug], references: [slug], onDelete: Cascade)
+
+  @@unique([postSlug, date])
+  @@index([date])
+}
+
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String
+  targetType String
+  targetId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([adminId, createdAt])
+  @@index([targetType, targetId])
+}
+
+model PortfolioVisibilitySetting {
+  id               String    @id @default(cuid())
+  shareKey         String    @unique
+  visibleName      Boolean   @default(true)
+  visibleEmail     Boolean   @default(true)
+  visiblePhone     Boolean   @default(false)
+  visibleLinks     Boolean   @default(true)
+  visibleCareer    Boolean   @default(true)
+  visibleProjects  Boolean   @default(true)
+  visibleEducation Boolean   @default(false)
+  expiresAt        DateTime?
+  createdAt        DateTime  @default(now())
+}

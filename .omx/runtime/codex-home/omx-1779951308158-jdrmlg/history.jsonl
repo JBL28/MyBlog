@@ -1,0 +1,28 @@
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779951801,"text":"DB 세팅같은거 env로 빼서 서버에서 실행할 docker-compose 파일 작성해줘"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779952303,"text":"빌드할 때 깃허브 시크릿으로 러너에서 동적 세팅 할 수 있도록 수정해"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779952558,"text":"수정 끝났으면 빌드, 배포 환경에서 각각 세팅할 것 정리해서 readme에 작성해 일단은 다른 내용 없이 환경 세팅, 실행법까지만 ㄱㄱ\n그리고 지금 환경 기준 필요없는 env 삭제해"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779952723,"text":"야 db 도커네트워크 써서 세팅할 수 있게 수정해\nbuild랑 배포할 때도 컨테이너명:포트 방식으로 세팅할 수 있게"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779952925,"text":".env.example , Dockerfile 이거 두개 쓰는거야?"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779952953,"text":"Dockerfile 하드코딩된 주소는 뭐야"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779953003,"text":"ㅇㅋ 그럼 next에 서버 컴포넌트에서 DB 연결 해보고, 성공/실패 서버로그 하나 띄우도록 해줘."}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779953153,"text":"브랜치 하나 파서 푸시 후 PR 하나 남겨"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779953271,"text":"지금 프로젝트 기준, Vercel 데이터소스 연결하려면 어떻게 세팅해야해?"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779953360,"text":"README 최신화 되어있는거야?"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779953484,"text":"Prefer `String#replaceAll()` over `String#replace()`.\nsrc/lib/db-health.ts\nconst oneLineMessage = message.replace(/\\s+/g, \" \").trim();"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779953538,"text":"push만 ㄱㄱ"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779953607,"text":"PR에 달린 제미나이 코드리뷰 댓글들 반영해"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779953716,"text":"앞으로 커밋 메시지, PR은 한글로 작성하도록 문서에 명시해둬"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779953732,"text":"문서에 명시 먼저 ㄱ"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779956325,"text":"배포환경에서 DB 관련 로그가 안뜨는데 이유가 뭘까?"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779956346,"text":"▲ Next.js 16.2.6\n\n- Local:         http://localhost:3000\n\n- Network:       http://0.0.0.0:3000\n\n✓ Ready in 0ms\n\n그냥 이 상태야"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779956521,"text":"지금 #5 PR 작성해줘. 지금은 문서만 만들어둔 상태"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779956674,"text":"제미나이 코드리뷰 달린 코멘트 읽어보고 수정할만한 것들인지 판단해봐"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779956769,"text":"1번은 처음 서버 구동 시 발생하도록 수정하고, 2번은 선제반영해"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779957215,"text":"서버 env에 운영서버 주소, actions에 dev서버 주소 맞지?"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779957344,"text":"Remove this use of the \"void\" operator. \nsrc/lib/db-health.ts\nvoid prisma.$queryRaw`SELECT 1`\nRemove this use of the \"void\" operator."}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779957421,"text":"푸시 ㄱㄱ"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779957461,"text":"어때 내 워크플로우, 제미나이로 한번 잡고 소나큐브로 한번 더 잡고"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779957548,"text":"이제 다시 개발로 돌아오자. 인프라 세팅은 충분한 듯\n개발 들어가기 전에, 페이즈가 끝날 때마다 docs에 작업내용을 정리하도록 문서에 저장해줘."}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779957617,"text":"오케이 지금 진행상황 파악해. 몇번째 페이즈까지 왔는지"}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779957920,"text":"2페이즈 시작하자."}
+{"session_id":"019e6d5d-aa65-7730-99ff-81d1a230ea7b","ts":1779958561,"text":"오늘은 거기까지 하고, 진행상황 문서화해"}

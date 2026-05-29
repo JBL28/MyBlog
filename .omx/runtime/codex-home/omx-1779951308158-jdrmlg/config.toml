@@ -1,0 +1,67 @@
+# oh-my-codex top-level settings (must be before any [table])
+model_reasoning_effort = "medium"
+developer_instructions = "You have oh-my-codex installed. AGENTS.md is the orchestration brain and main control surface. Follow AGENTS.md for skill/keyword routing, $name workflow invocation, and role-specialized subagents. Use outcome-first, concise progress updates: state the target result, constraints, validation evidence, and stop condition before adding process detail. Native subagents live in .codex/agents and may handle independent parallel subtasks within one Codex session or team pane. Skills load from .codex/skills, not native-agent TOMLs. Treat installed prompts as narrower execution surfaces under AGENTS.md authority."
+model = "gpt-5.5"
+# oh-my-codex seeded behavioral defaults (uninstall removes unchanged defaults)
+model_context_window = 250000
+model_auto_compact_token_limit = 200000
+# End oh-my-codex seeded behavioral defaults
+
+[features]
+multi_agent = true
+child_agents_md = true
+hooks = true
+goals = true
+
+[shell_environment_policy.set]
+USE_OMX_EXPLORE_CMD = "0"
+
+[agents]
+max_threads = 6
+max_depth = 2
+
+# ============================================================
+# oh-my-codex (OMX) Configuration
+# Managed by omx setup - manual edits preserved on next setup
+# ============================================================
+
+# OMX-owned Codex hook trust state
+# Trusts only setup-managed native hook wrappers.
+[hooks.state."/workspaces/alpine/MyBlog/.codex/hooks.json:post_compact:0:0"]
+trusted_hash = "sha256:022824cf3dcfeaf7017b4d9fff85ce94c42cd91167bbc702916e3b0a4875cf34"
+
+[hooks.state."/workspaces/alpine/MyBlog/.codex/hooks.json:post_tool_use:0:0"]
+trusted_hash = "sha256:946f358051bb72c4be3456864c81b2da2e74280f3d965104357edbfb28310768"
+
+[hooks.state."/workspaces/alpine/MyBlog/.codex/hooks.json:pre_compact:0:0"]
+trusted_hash = "sha256:6cf505695eb5eece648b6174b19a5cd7d52995bedb9de6269965b39ff5239924"
+
+[hooks.state."/workspaces/alpine/MyBlog/.codex/hooks.json:pre_tool_use:0:0"]
+trusted_hash = "sha256:c4a153d063d04ec4c7065d95dd1349c9838ae54e9d59226bf36e3121d59eda27"
+
+[hooks.state."/workspaces/alpine/MyBlog/.codex/hooks.json:session_start:0:0"]
+trusted_hash = "sha256:597d22e9ebad17616615131e17fefa81584afea6c0c86aeae33d6372d0f59826"
+
+[hooks.state."/workspaces/alpine/MyBlog/.codex/hooks.json:stop:0:0"]
+trusted_hash = "sha256:8d908cff2b279eb4fe931b3d879933fae28238cd3e09213731c9081c3fd49470"
+
+[hooks.state."/workspaces/alpine/MyBlog/.codex/hooks.json:user_prompt_submit:0:0"]
+trusted_hash = "sha256:94abdfa73a37cde607f5e2a8a8ecec66dfb7f80ebd45ccbcef06f5ca0cd87c2c"
+# End OMX-owned Codex hook trust state
+
+# OMX TUI StatusLine (Codex CLI v0.101.0+)
+[tui]
+# omx:managed-status-line
+status_line = ["model-with-reasoning", "git-branch", "context-remaining", "total-input-tokens", "total-output-tokens", "five-hour-limit", "weekly-limit"]
+
+[tui.model_availability_nux]
+"gpt-5.5" = 1
+
+# ============================================================
+# End oh-my-codex
+
+# OMX-synced Codex project trust state (from runtime CODEX_HOME)
+[projects."/workspaces/alpine/MyBlog"]
+trust_level = "trusted"
+
+# End OMX-synced Codex project trust state

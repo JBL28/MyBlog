@@ -1,0 +1,10 @@
+{
+  "session_id": "omx-1779951308158-jdrmlg",
+  "native_session_id": "019e6d5d-aa65-7730-99ff-81d1a230ea7b",
+  "started_at": "2026-05-28T06:55:14.391Z",
+  "cwd": "/workspaces/alpine/MyBlog",
+  "pid": 72196,
+  "platform": "linux",
+  "pid_start_ticks": 1319696,
+  "pid_cmdline": "codex -c model_reasoning_effort=\"high\" -c model_instructions_file=\"/workspaces/alpine/MyBlog/.omx/state/sessions/omx-1779951308158-jdrmlg/AGENTS.md\""
+}

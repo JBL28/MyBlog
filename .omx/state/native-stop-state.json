@@ -1,0 +1,14 @@
+{
+  "sessions": {
+    "omx-1779951308158-jdrmlg": {
+      "ordinary_no_progress_guard": {
+        "fingerprint": "ordinary|문서화 완료. - 작성 파일: `docs/progress/2026-05-28-phase-2-start.md` - 현재 브랜치: `phase-2-posts-mdx` - 상태: phase 2 시작, 1차 구현 초안 작성 중 - 검증: 오늘은 중단 요청 기준으로 `lint/typecheck/build` 미실행으로 명시해둠 - 다음 시작점도 문서에 적어둠: 1. 타입/린트 확인 2. 오류 수정 3. 빌드 검증 4. 게시글 라우트 동작 확인 5. phase 2 완료 기준 재점검 참고로 현재 변경분은 아직 커밋/푸시하지 않았어.",
+        "first_seen_at": "2026-05-28T08:57:39.720Z",
+        "last_seen_at": "2026-05-28T08:57:39.720Z",
+        "repeat_count": 1,
+        "last_turn_id": "019e6dc2-7110-79b2-bc12-4ade53349236",
+        "last_thread_id": null
+      }
+    }
+  }
+}
